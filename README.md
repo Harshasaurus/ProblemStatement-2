@@ -70,6 +70,11 @@ Modern cloud systems demand reliable, consistent, and reproducible infrastructur
 
 ```text
 Problem-2/
+├── .agents/
+│   └── plugins/
+│       └── mcp-tools/
+│           ├── plugin.json              # Custom workspace agent plugin definition
+│           └── mcp_config.example.json  # Model Context Protocol (MCP) server configuration template
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml               # GitHub Actions CI/CD automation pipeline
@@ -87,6 +92,7 @@ Problem-2/
 ├── screenshots/
 │   └── README.md                    # Mandatory screenshots checklist & guide
 ├── .gitignore                       # Git ignore rules for state files, tokens & cache
+├── mcp_config.example.json          # Model Context Protocol root template
 ├── README.md                        # Complete project documentation & guide
 └── REPORT.md                        # Comprehensive 10-chapter academic project report
 ```
@@ -275,6 +281,74 @@ To demonstrate complete infrastructure lifecycle management:
 
 ---
 
+## 🤖 Model Context Protocol (MCP) Server Integration
+
+This repository is integrated with the **Model Context Protocol (MCP)**, an open standard that allows AI pair programmers and LLM agents to securely connect to external tools, data sources, and version control workflows.
+
+### 1. Architecture & Transport
+```
++-------------------------------------------------------------+
+|                 AI Developer Assistant / IDE                |
++-------------------------------------------------------------+
+                               |
+                       JSON-RPC (stdio)
+                               v
++-------------------------------------------------------------+
+|       GitHub MCP Server (@modelcontextprotocol/server-github)|
++-------------------------------------------------------------+
+                               |
+                        HTTPS (REST API)
+                               v
++-------------------------------------------------------------+
+|              GitHub Cloud (Harshasaurus/ProblemStatement-2) |
++-------------------------------------------------------------+
+```
+
+- **Transport Mechanism:** Local **Stdio Transport** spawned via `npx` (`stdin`/`stdout`).
+- **Server Package:** Official `@modelcontextprotocol/server-github`.
+- **Authentication:** Scoped GitHub Personal Access Token injected as an environment variable (`GITHUB_PERSONAL_ACCESS_TOKEN`).
+
+### 2. Workspace Plugin Configuration
+The MCP integration is declared as a workspace plugin under `.agents/plugins/mcp-tools/`:
+
+- **Plugin Declaration (`.agents/plugins/mcp-tools/plugin.json`):**
+  ```json
+  {
+    "name": "workspace-mcp-tools",
+    "description": "Workspace MCP integration for GitHub and Gemini tools"
+  }
+  ```
+- **Server Definition (`.agents/plugins/mcp-tools/mcp_config.json`):**
+  ```json
+  {
+    "mcpServers": {
+      "github": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-github"],
+        "env": {
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
+        }
+      }
+    }
+  }
+  ```
+  *(See `mcp_config.example.json` and `.agents/plugins/mcp-tools/mcp_config.example.json` for setup templates)*
+
+### 3. Capabilities & Available Tools
+The GitHub MCP server provides 26 standardized tools directly to the AI assistant:
+- **Repository Operations:** `search_repositories`, `fork_repository`, `create_repository`
+- **Git & Branches:** `list_commits`, `create_branch`, `push_files`
+- **Pull Requests:** `create_pull_request`, `list_pull_requests`, `get_pull_request`, `merge_pull_request`
+- **Issue Tracking:** `create_issue`, `list_issues`, `get_issue`, `add_issue_comment`
+- **Code Inspection:** `search_code`, `get_file_contents`
+
+### 4. Security & Credential Isolation
+To maintain strict security:
+- `mcp_config.json` containing the personal access token is excluded from source control via `.gitignore`.
+- Template files (`mcp_config.example.json`) are provided for team members to supply their own credentials locally.
+
+---
+
 ## 📋 Evaluation Demonstration Sequence
 
 When demonstrating this project for academic evaluation or viva:
@@ -286,3 +360,4 @@ When demonstrating this project for academic evaluation or viva:
 6. **Test CRUD:** Add, update status, and delete tasks in the web browser.
 7. **Show CI/CD:** Push a commit and display the automated GitHub Actions pipeline.
 8. **Demonstrate Destroy & Recreate:** Run `terraform destroy` followed by `terraform apply`.
+9. **Explain MCP Integration:** Explain how the project integrates the `@modelcontextprotocol/server-github` MCP server via `.agents/plugins/mcp-tools/mcp_config.json` over stdio transport to grant AI agents GitHub tooling capabilities while securing tokens in `.gitignore`.

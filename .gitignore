@@ -59,6 +59,13 @@ Thumbs.db
 # Assignment prompt / binaries
 *.docx
 
-# MCP Server Configs & Local Agents
-.agents/
+# MCP Server Configs & Local Agents (Ignore active secrets, track templates)
+.agents/*
+!.agents/plugins/
+.agents/plugins/*
+!.agents/plugins/mcp-tools/
+.agents/plugins/mcp-tools/*
+!.agents/plugins/mcp-tools/plugin.json
+!.agents/plugins/mcp-tools/mcp_config.example.json
 mcp_config.json
+!mcp_config.example.json

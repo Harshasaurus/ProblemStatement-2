@@ -153,6 +153,7 @@ The system utilizes an ultra-low-latency serverless edge architecture:
 | **REST API** | **JavaScript (ES Module Worker fetch handler)** | Native Request/Response handling for CRUD endpoints. |
 | **Version Control** | **Git & GitHub** | Distributed source code tracking, branch management, and audit history. |
 | **CI/CD** | **GitHub Actions** | Automated validation, planning, and deployment pipeline triggered on repository push. |
+| **Agent Protocol** | **Model Context Protocol (MCP)** | Open standard connecting AI pair programming agents to GitHub tools via `@modelcontextprotocol/server-github` over local stdio transport. |
 
 ---
 
@@ -373,3 +374,11 @@ Infrastructure drift occurs when the actual state of cloud resources diverges fr
   *A:* On the next `terraform plan`, Terraform detects drift (the resource is missing from the cloud), compares it to the declared HCL, and marks the KV namespace for recreation (`+ create`).
 - **Q: How would you structure this configuration to support multiple environments (`dev`, `staging`, `prod`)?**  
   *A:* By utilizing Terraform modules or directory workspaces (`terraform/dev`, `terraform/prod`) and parameterizing the `environment` variable to append environment tags to resource names.
+
+### Model Context Protocol (MCP) Questions
+- **Q: How is this project connected to an MCP server?**  
+  *A:* The workspace defines an agent plugin at `.agents/plugins/mcp-tools/` which registers the `@modelcontextprotocol/server-github` MCP server. The language server communicates with it via JSON-RPC over local stdio transport.
+- **Q: What capabilities does the MCP server provide?**  
+  *A:* It exposes 26 standardized tools allowing the AI assistant to query commits, inspect repository files, review issues, and manage pull requests directly.
+- **Q: How are credentials secured in the MCP configuration?**  
+  *A:* The `GITHUB_PERSONAL_ACCESS_TOKEN` is supplied strictly in the local `mcp_config.json` which is ignored via `.gitignore`. A sanitized template `mcp_config.example.json` is checked into version control for team reproduction.
