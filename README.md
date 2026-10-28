@@ -214,6 +214,7 @@ terraform apply
    https://student-task-manager-production.<your-subdomain>.workers.dev
    ```
 3. Perform CRUD verification:
+   - **Live Production URL:** [https://student-task-manager-production.kuratkarharshal20.workers.dev](https://student-task-manager-production.kuratkarharshal20.workers.dev)
    - **Create:** Add a task ("Complete Cloud Computing Assignment", High Priority).
    - **Read:** Confirm the task appears in the table.
    - **Update:** Click the checkmark to mark it `Completed`.

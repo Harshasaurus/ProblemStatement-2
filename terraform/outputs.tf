@@ -23,7 +23,7 @@ output "environment" {
   value       = var.environment
 }
 
-output "access_instructions" {
-  description = "Instructions for accessing the deployed application"
-  value       = "Visit https://${cloudflare_workers_script.task_manager.name}.<your-workers-subdomain>.workers.dev in your web browser."
+output "application_url" {
+  description = "Public URL of the live deployed application"
+  value       = "https://${cloudflare_workers_script.task_manager.name}.kuratkarharshal20.workers.dev"
 }

@@ -6,10 +6,13 @@
 ---
 
 ### Course & Academic Details
+- **Student Name:** Harshal Kuratkar
 - **Subject:** Cloud Computing / DevOps Engineering Lab
 - **Project Type:** Infrastructure as Code (IaC) Serverless Deployment
-- **IaC Tool:** HashiCorp Terraform
+- **IaC Tool:** HashiCorp Terraform v1.9.8
 - **Cloud Provider:** Cloudflare (Workers & Workers KV)
+- **Live Deployed URL:** https://student-task-manager-production.kuratkarharshal20.workers.dev
+- **Provisioned KV Namespace ID:** `b4259994837a4c26a13aabf80f9366dc`
 - **CI/CD Platform:** GitHub Actions
 
 ---
