@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Task Manager | Cloudflare & Terraform IaC</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-icon">📋</div>
+        <div>
+          <h1>Student Task Manager</h1>
+          <p class="subtitle">Automated Serverless Academic Task Management • Terraform IaC Demo</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-cloudflare">⚡ Cloudflare Workers</span>
+        <span class="badge badge-kv">🗄️ Workers KV</span>
+        <span class="badge badge-terraform">🏗️ Terraform Managed</span>
+      </div>
+    </header>
+
+    <!-- System Architecture Banner -->
+    <section class="iac-banner">
+      <div class="banner-content">
+        <span class="status-indicator"></span>
+        <span class="banner-text"><strong>Architecture:</strong> End User &rarr; Cloudflare Edge Worker &rarr; Workers KV Persistent Storage (Provisioned via Terraform IaC & GitHub Actions)</span>
+      </div>
+      <div class="banner-env">
+        <span class="env-tag" id="envBadge">production</span>
+      </div>
+    </section>
+
+    <!-- Stats Dashboard -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Tasks</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-sub">Tracked in Workers KV</div>
+      </div>
+      <div class="stat-card stat-pending">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-sub">Needs attention</div>
+      </div>
+      <div class="stat-card stat-progress">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" id="statProgress">0</div>
+        <div class="stat-sub">Currently underway</div>
+      </div>
+      <div class="stat-card stat-completed">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="statCompleted">0</div>
+        <div class="stat-sub">Finished successfully</div>
+      </div>
+    </section>
+
+    <!-- Main Content Layout -->
+    <main class="main-layout">
+      <!-- Create Task Card -->
+      <section class="panel create-panel">
+        <div class="panel-header">
+          <h2>➕ Add New Task</h2>
+          <span class="hint">POST /api/tasks</span>
+        </div>
+        <form id="createTaskForm">
+          <div class="form-group">
+            <label for="taskTitle">Task Title <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="taskTitle" 
+              placeholder="e.g., Complete Cloud Computing Assignment" 
+              required
+              autocomplete="off"
+            >
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label for="taskPriority">Priority</label>
+              <select id="taskPriority">
+                <option value="High">🔴 High</option>
+                <option value="Medium" selected>🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
+            </div>
+            <div class="form-group col">
+              <label for="taskStatus">Initial Status</label>
+              <select id="taskStatus">
+                <option value="Pending" selected>⏳ Pending</option>
+                <option value="In Progress">🔄 In Progress</option>
+                <option value="Completed">✅ Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="sample-pills">
+            <span class="sample-label">Quick samples:</span>
+            <button type="button" class="btn-pill" data-title="Complete Cloud Computing Assignment" data-priority="High">Cloud Assignment</button>
+            <button type="button" class="btn-pill" data-title="Prepare Project Presentation" data-priority="High">Project Presentation</button>
+            <button type="button" class="btn-pill" data-title="Submit Final Year Project Report" data-priority="High">Project Report</button>
+            <button type="button" class="btn-pill" data-title="Attend Project Viva" data-priority="Medium">Project Viva</button>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnSubmitTask">
+            <span class="btn-icon">💾</span> Create Task
+          </button>
+        </form>
+      </section>
+
+      <!-- Task List Card -->
+      <section class="panel list-panel">
+        <div class="panel-header">
+          <div class="header-with-count">
+            <h2>📑 Academic Tasks</h2>
+            <span class="count-badge" id="taskCountBadge">0</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btnRefresh" title="Reload tasks from KV">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search by ID or Title...">
+          </div>
+          <div class="filter-group">
+            <label for="filterStatus">Status:</label>
+            <select id="filterStatus">
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterPriority">Priority:</label>
+            <select id="filterPriority">
+              <option value="All">All</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-responsive">
+          <table class="tasks-table">
+            <thead>
+              <tr>
+                <th style="width: 90px;">Task ID</th>
+                <th>Task Title</th>
+                <th style="width: 110px;">Priority</th>
+                <th style="width: 130px;">Status</th>
+                <th style="width: 140px;">Created Date</th>
+                <th style="width: 160px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+              <tr>
+                <td colspan="6" class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Loading tasks from Cloudflare Workers KV...</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Edit Task Modal -->
+    <div class="modal-backdrop" id="editModalBackdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>✏️ Edit Task: <span id="editTaskIdLabel" class="mono"></span></h3>
+          <button class="modal-close" id="btnCancelEdit">&times;</button>
+        </div>
+        <form id="editTaskForm">
+          <input type="hidden" id="editTaskId">
+          <div class="form-group">
+            <label for="editTaskTitle">Task Title</label>
+            <input type="text" id="editTaskTitle" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group col">
+              <label for="editTaskPriority">Priority</label>
+              <select id="editTaskPriority">
+                <option value="High">🔴 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
+            </div>
+            <div class="form-group col">
+              <label for="editTaskStatus">Status</label>
+              <select id="editTaskStatus">
+                <option value="Pending">⏳ Pending</option>
+                <option value="In Progress">🔄 In Progress</option>
+                <option value="Completed">✅ Completed</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="btnModalCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <p><strong>Course Mini Project:</strong> Infrastructure as Code (IaC) with Terraform & Cloudflare Serverless</p>
+        <p class="footer-sub">Resources provisioned purely via code: <code>cloudflare_workers_kv_namespace</code> &bull; <code>cloudflare_worker_script</code></p>
+      </div>
+      <div class="footer-right">
+        <div class="api-status">
+          <span class="status-dot"></span>
+          <span>Workers KV API Online</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
