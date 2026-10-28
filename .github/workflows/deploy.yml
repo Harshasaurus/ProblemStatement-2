@@ -1,0 +1,71 @@
+name: "IaC Deploy to Cloudflare"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'application/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - 'application/**'
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: "Terraform CI/CD Pipeline"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Step 2: Install HashiCorp Terraform CLI
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      # Step 3: Check Terraform formatting (Fails if not formatted per standards)
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check
+
+      # Step 4: Initialize Terraform working directory & download Cloudflare provider
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        env:
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Step 5: Validate Terraform configuration files syntax
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      # Step 6: Generate Terraform Execution Plan
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        env:
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Step 7: Apply Changes (Only executes on push to main branch)
+      - name: Terraform Apply
+        id: apply
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        run: terraform apply -auto-approve -input=false
+        env:
+          TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
