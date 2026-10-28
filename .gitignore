@@ -1,0 +1,57 @@
+# ==============================================================================
+# Git Ignore Rules for Terraform & Cloudflare IaC Project
+# Protects sensitive API credentials, local state files, and editor caches
+# ==============================================================================
+
+# Local .terraform directories
+**/.terraform/*
+.terraform/
+.terraform.lock.hcl
+
+# .tfstate files (May contain secrets and resource IDs)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Sensitive Variable definitions
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Node / JS artifacts (if locally tested)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE & Editor caches
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Assignment prompt / binaries
+*.docx

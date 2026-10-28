@@ -1,0 +1,24 @@
+# ==============================================================================
+# Terraform Variables Example File
+# Mini Project: Automated Deployment of Serverless Student Task Management (IaC)
+# 
+# Instructions:
+# 1. Copy this file to "terraform.tfvars":
+#    cp terraform.tfvars.example terraform.tfvars
+# 2. Replace the placeholder values with your actual Cloudflare credentials.
+# 3. DO NOT commit "terraform.tfvars" into Git (it is protected by .gitignore).
+# ==============================================================================
+
+# Your 32-character Cloudflare Account ID
+# (Found in Cloudflare Dashboard -> Workers & Pages -> Overview right sidebar)
+cloudflare_account_id = "0123456789abcdef0123456789abcdef"
+
+# Scoped API Token with 'Workers Scripts:Edit' and 'Workers KV Storage:Edit' permissions
+# (Generate at: Cloudflare Dashboard -> My Profile -> API Tokens -> Create Custom Token)
+cloudflare_api_token = "your-cloudflare-api-token-here"
+
+# Resource Naming & Deployment Customization
+worker_name        = "student-task-manager"
+kv_namespace_name  = "student_tasks"
+environment        = "production"
+compatibility_date = "2024-01-01"
