@@ -73,6 +73,18 @@ export default {
       }
     };
 
+    // Helper: Retrieve fast-index from KV
+    async function getIndex() {
+      const raw = await kv.get('tasks:index');
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {}
+      }
+      return [];
+    }
+
     // ------------------------------------------------------------------------
     // REST API Routes (/api/tasks)
     // ------------------------------------------------------------------------
@@ -83,19 +95,20 @@ export default {
       try {
         // GET /api/tasks - Retrieve all tasks
         if (method === 'GET' && !taskId) {
-          const listResult = await kv.list({ prefix: 'task:' });
-          const tasks = [];
-          for (const keyItem of listResult.keys) {
-            const raw = await kv.get(keyItem.name);
-            if (raw) {
-              try {
-                tasks.push(JSON.parse(raw));
-              } catch (e) {
-                // skip corrupted record
+          let tasks = await getIndex();
+          if (tasks.length === 0) {
+            // Fallback to list() if index is empty
+            const listResult = await kv.list({ prefix: 'task:' });
+            for (const keyItem of listResult.keys) {
+              const raw = await kv.get(keyItem.name);
+              if (raw) {
+                try {
+                  tasks.push(JSON.parse(raw));
+                } catch (e) {}
               }
             }
           }
-          // Sort descending by ID / created date
+          // Sort descending by ID
           tasks.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
 
           return jsonResponse(tasks, 200, corsHeaders);
@@ -123,11 +136,11 @@ export default {
             return jsonResponse({ error: 'Task title is required' }, 400, corsHeaders);
           }
 
-          // Generate sequential or custom ID (e.g. T101, T102...)
-          const listResult = await kv.list({ prefix: 'task:' });
+          // Generate sequential ID (e.g. T101, T102...)
+          let index = await getIndex();
           let nextNum = 101;
-          for (const k of listResult.keys) {
-            const match = k.name.match(/task:T(\d+)/i);
+          for (const item of index) {
+            const match = (item.id || '').match(/T(\d+)/i);
             if (match) {
               const num = parseInt(match[1], 10);
               if (num >= nextNum) nextNum = num + 1;
@@ -145,6 +158,11 @@ export default {
           };
 
           await kv.put(`task:${id}`, JSON.stringify(newTask));
+
+          // Commit to index for immediate read consistency
+          index = index.filter(t => t.id !== id);
+          index.unshift(newTask);
+          await kv.put('tasks:index', JSON.stringify(index));
 
           return jsonResponse({
             success: true,
@@ -178,6 +196,16 @@ export default {
 
           await kv.put(`task:${taskId}`, JSON.stringify(updatedTask));
 
+          // Update index
+          let index = await getIndex();
+          const targetIdx = index.findIndex(t => t.id === taskId);
+          if (targetIdx !== -1) {
+            index[targetIdx] = updatedTask;
+          } else {
+            index.unshift(updatedTask);
+          }
+          await kv.put('tasks:index', JSON.stringify(index));
+
           return jsonResponse({
             success: true,
             message: `Task ${taskId} updated successfully in KV`,
@@ -193,6 +221,11 @@ export default {
           }
 
           await kv.delete(`task:${taskId}`);
+
+          // Remove from index
+          let index = await getIndex();
+          index = index.filter(t => t.id !== taskId);
+          await kv.put('tasks:index', JSON.stringify(index));
 
           return jsonResponse({
             success: true,

@@ -31,6 +31,9 @@ override.tf.json
 # CLI configuration files
 .terraformrc
 terraform.rc
+*.exe
+*.zip
+LICENSE.txt
 
 # Node / JS artifacts (if locally tested)
 node_modules/

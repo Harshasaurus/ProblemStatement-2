@@ -4,9 +4,8 @@
 # 
 # Provisioned Resources:
 # 1. Cloudflare Workers KV Namespace (Persistent Key-Value Store)
-# 2. Cloudflare Worker Script (Serverless Compute & REST API)
+# 2. Cloudflare Worker Script (Serverless Application & REST API)
 # 3. Worker-to-KV Binding (TASKS_KV)
-# 4. Workers.dev Subdomain Route Activation
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -18,9 +17,9 @@ resource "cloudflare_workers_kv_namespace" "tasks_kv" {
 }
 
 # ------------------------------------------------------------------------------
-# 2. Cloudflare Worker Script (Serverless Application & REST API)
+# 2. Cloudflare Worker Script (Serverless Compute & REST API)
 # ------------------------------------------------------------------------------
-resource "cloudflare_worker_script" "task_manager" {
+resource "cloudflare_workers_script" "task_manager" {
   account_id         = var.cloudflare_account_id
   name               = "${var.worker_name}-${var.environment}"
   content            = file("${path.module}/../application/worker.js")
@@ -33,18 +32,9 @@ resource "cloudflare_worker_script" "task_manager" {
     namespace_id = cloudflare_workers_kv_namespace.tasks_kv.id
   }
 
-  # Environment Variable Binding
+  # Plain text environment variable binding
   plain_text_binding {
     name = "ENVIRONMENT"
     text = var.environment
   }
-}
-
-# ------------------------------------------------------------------------------
-# 3. Enable Public Route via *.workers.dev Subdomain
-# ------------------------------------------------------------------------------
-resource "cloudflare_workers_script_subdomain" "task_manager_subdomain" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_worker_script.task_manager.name
-  enabled     = true
 }
