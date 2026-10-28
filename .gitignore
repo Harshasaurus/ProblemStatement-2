@@ -58,3 +58,7 @@ Thumbs.db
 
 # Assignment prompt / binaries
 *.docx
+
+# MCP Server Configs & Local Agents
+.agents/
+mcp_config.json
